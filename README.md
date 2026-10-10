@@ -1,2 +1,4 @@
 # studious-tribble
-learning about github.
+learning  something about github
+
+Date: 10-10-2026
