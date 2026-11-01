@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack Goals</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            margin: 0;
+            background: #f4f3fb;
+            padding: 30px 20px;
+            color: #1f1f2e;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #5145b8;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .topbar h1 { margin-bottom: 4px; }
+
+        .subtitle {
+            margin: 0;
+            color: #626273;
+        }
+
+        .link-btn {
+            background: #5145b8;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .goal-form {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+
+        .goal-action { margin: 0; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            width: fit-content;
+            background: #5145b8;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .goal-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 12px;
+        }
+
+        .goal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #e4e3eb;
+            background: #fbfbfd;
+            padding: 14px 16px;
+            border-radius: 8px;
+        }
+
+        .goal-item.done {
+            background: #f2f8f4;
+            border-color: #dcebe0;
+        }
+
+        .goal-title { font-weight: 600; }
+        .goal-item.done .goal-title { color: #68756c; text-decoration: line-through; }
+
+        .goal-meta {
+            color: #626273;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .overdue-label {
+            display: inline-block;
+            margin-left: 8px;
+            color: #a12c2c;
+            font-weight: 700;
+        }
+
+        .goal-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0 14px;
+        }
+
+        .goal-summary h2 { margin: 0; }
+
+        .goal-counts {
+            color: #626273;
+            font-size: 14px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            padding: 4px;
+            width: fit-content;
+            border: 1px solid #e4e3eb;
+            border-radius: 8px;
+            background: #f7f7fa;
+        }
+
+        .filter-btn {
+            width: auto;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: transparent;
+            color: #454552;
+        }
+
+        .filter-btn[aria-pressed="true"] {
+            background: #5145b8;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .mini-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .toggle-btn {
+            background: #e7e1ff;
+            color: #3a2f7a;
+        }
+
+        .delete-btn {
+            background: #ffe5e5;
+            color: #a12c2c;
+        }
+
+        .filter-empty { color: #626273; }
+
+        @media (max-width: 560px) {
+            body { padding: 16px 12px; }
+            .container { padding: 20px 16px; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .goal-item { align-items: flex-start; flex-direction: column; }
+            .controls { width: 100%; }
+            .goal-summary { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <div>
+                <h1>Study Goals</h1>
+                <p class="subtitle">Keep your next learning milestones in view.</p>
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
+        </div>
+
+        <form class="goal-form" method="POST" action="{{ url_for('goals') }}">
+            <label for="goal_title"><strong>New goal</strong></label>
+            <input type="text" id="goal_title" name="goal_title" placeholder="Example: Finish Python practice quiz" required>
+
+            <label for="target_date"><strong>Target date</strong></label>
+            <input type="date" id="target_date" name="target_date">
+
+            <button type="submit">Add Goal</button>
+        </form>
+
+        <div class="goal-summary">
+            <h2>Current goals</h2>
+            <div class="goal-counts">{{ active_count }} active · {{ completed_count }} completed</div>
+        </div>
+        {% if goals %}
+            <div class="filters" role="group" aria-label="Filter goals">
+                <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">All</button>
+                <button type="button" class="filter-btn" data-filter="active" aria-pressed="false">Active</button>
+                <button type="button" class="filter-btn" data-filter="done" aria-pressed="false">Completed</button>
+            </div>
+            <ul class="goal-list">
+                {% for goal in goals %}
+                    <li class="goal-item {% if goal['completed'] %}done{% endif %}" data-status="{% if goal['completed'] %}done{% else %}active{% endif %}">
+                        <div>
+                            <div class="goal-title">{{ goal['title'] }}</div>
+                            {% if goal['target_date'] %}
+                                <div class="goal-meta">
+                                    Due: {{ goal['target_date'] }}
+                                    {% if not goal['completed'] and goal['target_date'] < today %}
+                                        <span class="overdue-label">Overdue</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="controls">
+                            <form class="goal-action" method="POST" action="{{ url_for('toggle_goal', goal_id=goal['id']) }}">
+                                <button type="submit" class="mini-btn toggle-btn">
+                                    {% if goal['completed'] %}Mark Active{% else %}Mark Done{% endif %}
+                                </button>
+                            </form>
+                            <form class="goal-action" method="POST" action="{{ url_for('delete_goal', goal_id=goal['id']) }}">
+                                <button type="submit" class="mini-btn delete-btn">Delete</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No goals yet. Add your first learning goal above.</p>
+        {% endif %}
+    </div>
+    <script>
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        const goalItems = document.querySelectorAll(".goal-item");
+
+        filterButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                const filter = button.dataset.filter;
+                filterButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+                goalItems.forEach((goal) => {
+                    goal.hidden = filter !== "all" && goal.dataset.status !== filter;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

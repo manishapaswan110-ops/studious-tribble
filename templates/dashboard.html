@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack Dashboard</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            margin: 0;
+            background: #f4f3fb;
+            padding: 30px 20px;
+            color: #1f1f2e;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #5145b8;
+            margin: 0;
+        }
+
+        .logout-btn {
+            background: #5145b8;
+            color: white;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 9px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+        }
+
+        .label {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #5145b8;
+        }
+
+        .profile {
+            margin-top: 25px;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+        }
+
+        .profile p {
+            margin: 10px 0;
+            color: #444;
+        }
+
+        .progress-section {
+            margin-top: 20px;
+        }
+
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            color: #444;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 14px;
+            background: #eee;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #5145b8, #7b69d9);
+            border-radius: 999px;
+        }
+
+        .fill-green {
+            background: linear-gradient(90deg, #2dbf75, #5fd398);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .mini-card {
+            background: #f8f6ff;
+            border: 1px solid #e1dffd;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .mini-label {
+            color: #777;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .mini-value {
+            font-size: 22px;
+            color: #5145b8;
+            font-weight: bold;
+        }
+
+        .mini-value.small {
+            font-size: 16px;
+            color: #444;
+        }
+
+        .goal-list {
+            list-style: none;
+            margin: 18px 0 0;
+            padding: 0;
+        }
+
+        .goal-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            background: #f7f7ff;
+            border: 1px solid #e5e0ff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 12px 14px;
+            color: #333;
+        }
+
+        .goal-item.done {
+            text-decoration: line-through;
+            color: #4a7c59;
+            background: #eefaf2;
+            border-color: #ccebd9;
+        }
+
+        .goal-item small {
+            color: #666;
+        }
+
+        .primary-link {
+            display: inline-block;
+            background: #5145b8;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1>StudyTrack Dashboard</h1>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="label">Welcome</div>
+                <div class="value">{{ user['name'] }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Education</div>
+                <div class="value">{{ user['education'] }}</div>
+            </div>
+            <div class="card">
+                <div class="label">Course</div>
+                <div class="value">{{ user['course'] }}</div>
+            </div>
+        </div>
+
+        <div class="profile">
+            <h2>Study Progress Tracker</h2>
+
+            <div class="progress-section">
+                <div class="progress-row">
+                    <span>Weekly study hours</span>
+                    <strong>{{ progress['weekly_hours'] }} / {{ progress['goal_hours'] }} hrs</strong>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill hours-progress" data-progress="{{ progress['hours_percent'] }}"></div>
+                </div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-row">
+                    <span>Lessons completed</span>
+                    <strong>{{ progress['completed_lessons'] }} / {{ progress['total_lessons'] }}</strong>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill fill-green lessons-progress" data-progress="{{ progress['lessons_percent'] }}"></div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="mini-card">
+                    <div class="mini-label">Study streak</div>
+                    <div class="mini-value">{{ progress['streak_days'] }} days</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Next target</div>
+                    <div class="mini-value small">{{ progress['next_goal'] }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile">
+            <h2>Current Study Goals</h2>
+            {% if goals %}
+                <ul class="goal-list">
+                    {% for goal in goals %}
+                        <li class="goal-item {% if goal['completed'] %}done{% endif %}">
+                            <span>{{ goal['title'] }}</span>
+                            {% if goal['target_date'] %}
+                                <small>Due: {{ goal['target_date'] }}</small>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No goals added yet.</p>
+            {% endif %}
+            <p style="margin-top: 18px;">
+                <a href="{{ url_for('goals') }}" class="primary-link">Manage goals</a>
+            </p>
+        </div>
+
+        <div class="profile">
+            <h2>Weekly Study Planner</h2>
+            <p>Plan your sessions and keep your week balanced.</p>
+            <p style="margin-top: 18px;">
+                <a href="{{ url_for('planner') }}" class="primary-link">Open planner</a>
+            </p>
+        </div>
+
+        <div class="profile">
+            <h2>Profile</h2>
+            <p>Update your personal study details and preferences.</p>
+            <p style="margin-top: 18px;">
+                <a href="{{ url_for('profile') }}" class="primary-link">Edit profile</a>
+            </p>
+        </div>
+
+        <div class="profile">
+            <h2>Study Notes</h2>
+            <p>Capture quick reflections and lesson summaries.</p>
+            <p style="margin-top: 18px;">
+                <a href="{{ url_for('notes') }}" class="primary-link">Open notes</a>
+            </p>
+        </div>
+
+        <div class="profile">
+            <h2>Performance Report</h2>
+            <p>Track your subject scores and identify progress areas.</p>
+            <p style="margin-top: 18px;">
+                <a href="{{ url_for('results') }}" class="primary-link">Open reports</a>
+            </p>
+        </div>
+
+        <div class="profile">
+            <h2>Profile Summary</h2>
+            <p><strong>Email:</strong> {{ user['email'] }}</p>
+            <p><strong>Name:</strong> {{ user['name'] }}</p>
+            <p><strong>Current Level:</strong> {{ user['education'] }}</p>
+            <p><strong>Study Focus:</strong> {{ user['course'] }}</p>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('[data-progress]').forEach(function (element) {
+            element.style.width = element.dataset.progress + '%';
+        });
+    </script>
+</body>
+</html>

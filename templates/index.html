@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack | Student Dashboard</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <h2 class="logo">StudyTrack<span>.</span></h2>
+
+        <p class="menu-title">MENU</p>
+
+        <a href="/" class="nav active">▦ Dashboard</a>
+        <a href="#" class="nav">▤ My Subjects</a>
+        <a href="#" class="nav">✎ Weekly Tests</a>
+        <a href="#" class="nav">▥ Performance</a>
+        <a href="{{ url_for('register') }}" class="nav">
+            👤 Register
+        </a>
+
+        <div class="sidebar-bottom">
+            <p>Keep learning.</p>
+            <h3>Your progress matters!</h3>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <header class="topbar">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Track your learning journey.</p>
+            </div>
+
+           <div class="profile">
+            <div class="avatar">A</div>
+            <span>Student</span>
+
+            <a href="{{ url_for('register') }}"
+        class="small-button">
+             Register
+            </a>
+    </div>
+        </header>
+
+
+        <!-- WELCOME SECTION -->
+        <section class="welcome">
+            <div>
+                <p>YOUR LEARNING SPACE</p>
+                <h2>Welcome back, Nisha! 👋</h2>
+                <span>Small steps every day lead to big results.</span>
+            </div>
+            <div class="welcome-icon">📚</div>
+        </section>
+
+
+        <!-- STATISTICS -->
+        <section class="stats">
+
+            <div class="stat-card">
+                <p>Total Subjects</p>
+                <h2>4</h2>
+                <span>Subjects you're learning</span>
+            </div>
+
+            <div class="stat-card">
+                <p>Tests Completed</p>
+                <h2>8</h2>
+                <span>Keep practising!</span>
+            </div>
+
+            <div class="stat-card">
+                <p>Average Score</p>
+                <h2>78%</h2>
+                <span>Your overall performance</span>
+            </div>
+
+            <div class="stat-card">
+                <p>Study Streak</p>
+                <h2>5 Days 🔥</h2>
+                <span>Stay consistent</span>
+            </div>
+
+        </section>
+
+
+        <!-- SUBJECT PROGRESS -->
+        <section class="section">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Subject Performance</h2>
+                    <p>See how you're performing in each subject.</p>
+                </div>
+                <button class="small-button">View All</button>
+            </div>
+
+            <div class="subjects">
+
+                <div class="subject-card">
+                    <div class="subject-info">
+                        <h3>Python</h3>
+                        <strong>85%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill python"></div>
+                    </div>
+                    <p class="good">Excellent progress!</p>
+                </div>
+
+                <div class="subject-card">
+                    <div class="subject-info">
+                        <h3>Java</h3>
+                        <strong>65%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill java"></div>
+                    </div>
+                    <p class="average">Needs more practice.</p>
+                </div>
+
+                <div class="subject-card">
+                    <div class="subject-info">
+                        <h3>Statistics</h3>
+                        <strong>45%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill stats-bar"></div>
+                    </div>
+                    <p class="weak">Focus on this subject.</p>
+                </div>
+
+                <div class="subject-card">
+                    <div class="subject-info">
+                        <h3>Algebra</h3>
+                        <strong>75%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-fill algebra"></div>
+                    </div>
+                    <p class="good">Good progress!</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- BOTTOM SECTION -->
+        <section class="bottom-grid">
+
+            <div class="bottom-card">
+                <h2>📅 Upcoming Weekly Test</h2>
+                <h3>Statistics</h3>
+                <p>Topics: Probability and Data Analysis</p>
+                <p>Duration: 30 Minutes</p>
+                <button class="primary-button"
+                        onclick="alert('Weekly test feature coming soon!')">
+                    Start Test
+                </button>
+            </div>
+
+            <div class="bottom-card suggestion">
+                <h2>💡 Improvement Tip</h2>
+                <h3>Focus on Statistics</h3>
+                <p>Your current score suggests that you should
+                   practise probability and data analysis.</p>
+                <p class="tip">Tip: Practise 5 questions every day.</p>
+            </div>
+
+        </section>
+
+        <footer>
+            © 2026 StudyTrack. Learn better, grow smarter.
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>

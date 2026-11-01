@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack Profile</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            margin: 0;
+            background: #f4f3fb;
+            padding: 30px 20px;
+            color: #1f1f2e;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #5145b8;
+        }
+
+        .link-btn {
+            background: #5145b8;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            width: fit-content;
+            background: #5145b8;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .profile-card {
+            margin-top: 25px;
+            border: 1px solid #e9e2ff;
+            background: #faf8ff;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .profile-card p {
+            margin: 10px 0;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1>My Profile</h1>
+            <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('profile') }}">
+            <label for="name"><strong>Full Name</strong></label>
+            <input type="text" id="name" name="name" value="{{ user['name'] }}" required>
+
+            <label for="email"><strong>Email</strong></label>
+            <input type="email" id="email" value="{{ user['email'] }}" disabled>
+
+            <label for="education"><strong>Education Level</strong></label>
+            <select id="education" name="education" required>
+                <option value="School" {% if user['education'] == 'School' %}selected{% endif %}>School</option>
+                <option value="Undergraduate" {% if user['education'] == 'Undergraduate' %}selected{% endif %}>Undergraduate</option>
+                <option value="Postgraduate" {% if user['education'] == 'Postgraduate' %}selected{% endif %}>Postgraduate</option>
+                <option value="Masters" {% if user['education'] == 'Masters' %}selected{% endif %}>Masters</option>
+            </select>
+
+            <label for="course"><strong>Course / Class</strong></label>
+            <input type="text" id="course" name="course" value="{{ user['course'] }}" required>
+
+            <button type="submit">Save Changes</button>
+        </form>
+
+        <div class="profile-card">
+            <h2>Current Information</h2>
+            <p><strong>Name:</strong> {{ user['name'] }}</p>
+            <p><strong>Email:</strong> {{ user['email'] }}</p>
+            <p><strong>Education:</strong> {{ user['education'] }}</p>
+            <p><strong>Course:</strong> {{ user['course'] }}</p>
+        </div>
+    </div>
+</body>
+</html>

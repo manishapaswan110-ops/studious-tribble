@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack Results</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            margin: 0;
+            background: #f4f3fb;
+            padding: 30px 20px;
+            color: #1f1f2e;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #5145b8;
+        }
+
+        .link-btn {
+            background: #5145b8;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            width: fit-content;
+            background: #5145b8;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #faf8ff;
+            border: 1px solid #ede2ff;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .label {
+            color: #777;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #5145b8;
+        }
+
+        .chart-section {
+            margin: 30px 0;
+        }
+
+        .chart-section h2 {
+            margin-bottom: 8px;
+        }
+
+        .chart-note {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .score-chart {
+            display: flex;
+            align-items: end;
+            gap: 12px;
+            min-height: 230px;
+            overflow-x: auto;
+            padding: 18px 12px 0;
+            border-bottom: 1px solid #ddd;
+            background: repeating-linear-gradient(to top, transparent 0, transparent 56px, #eceaf2 57px, transparent 58px);
+        }
+
+        .chart-column {
+            display: flex;
+            flex: 1 0 64px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: end;
+            height: 210px;
+            gap: 7px;
+            text-align: center;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: start;
+            justify-content: center;
+            width: min(100%, 42px);
+            min-height: 3px;
+            border-radius: 5px 5px 0 0;
+            background: #368b78;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding-top: 5px;
+        }
+
+        .chart-label {
+            width: 100%;
+            overflow: hidden;
+            color: #555;
+            font-size: 11px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f7f4ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1>Performance Report</h1>
+            <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
+        </div>
+
+        <form method="POST" action="{{ url_for('results') }}">
+            <label for="subject"><strong>Subject</strong></label>
+            <input type="text" id="subject" name="subject" placeholder="Example: Mathematics" required>
+
+            <div class="row">
+                <div>
+                    <label for="score"><strong>Score</strong></label>
+                    <input type="number" id="score" name="score" min="0" max="100" required>
+                </div>
+                <div>
+                    <label for="total"><strong>Total</strong></label>
+                    <input type="number" id="total" name="total" min="1" max="100" value="100" required>
+                </div>
+                <div>
+                    <label for="test_type"><strong>Test type</strong></label>
+                    <select id="test_type" name="test_type" required>
+                        <option value="Quiz">Quiz</option>
+                        <option value="Weekly Test">Weekly Test</option>
+                        <option value="Unit Test">Unit Test</option>
+                        <option value="Mock Test">Mock Test</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Save Result</button>
+        </form>
+
+        <div class="summary-grid">
+            <div class="stat-box">
+                <div class="label">Average Score</div>
+                <div class="value">{{ avg_percentage }}%</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Total Tests</div>
+                <div class="value">{{ total_tests }}</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Best Subject</div>
+                <div class="value">{% if best_subject %}{{ best_subject }}{% else %}N/A{% endif %}</div>
+            </div>
+        </div>
+
+        {% if chart_tests %}
+            <section class="chart-section" aria-labelledby="score-history-heading">
+                <h2 id="score-history-heading">Score history</h2>
+                <p class="chart-note">Latest {{ chart_tests|length }} tests, ordered from oldest to newest</p>
+                <div class="score-chart" role="img" aria-label="Bar chart showing score percentages for recent tests">
+                    {% for test in chart_tests %}
+                        <div class="chart-column" title="{{ test['subject'] }} · {{ test['test_type'] }}: {{ test['percentage'] }}%">
+                            <div class="chart-bar" style="height: {{ test['percentage'] }}%;" aria-hidden="true">{{ test['percentage'] }}%</div>
+                            <div class="chart-label">{{ test['subject'] }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <h2>Recent results</h2>
+        {% if tests %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Test Type</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in tests %}
+                        <tr>
+                            <td>{{ test['subject'] }}</td>
+                            <td>{{ test['score'] }}/{{ test['total'] }}</td>
+                            <td>{{ test['test_type'] }}</td>
+                            <td>{{ test['created_at'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No test results added yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyTrack - Register</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f3fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .register-box {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 35px;
+            border-radius: 18px;
+            box-shadow: 0 5px 25px #00000012;
+        }
+
+        h1 {
+            color: #5145b8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #777;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 25px;
+            padding: 14px;
+            background: #5145b8;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #39308d;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .success {
+            background: #e6f9ed;
+            color: #1d7d45;
+        }
+
+        .error {
+            background: #ffe5e5;
+            color: #b00020;
+        }
+    </style>
+</head>
+
+<body>
+<div class="register-box">
+    <h1>Join StudyTrack</h1>
+    <p>Create your personal learning account</p>
+
+    {% if success %}
+    <div class="alert success">{{ success }}</div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert error">{{ error }}</div>
+    {% endif %}
+
+    <form action="{{ url_for('register') }}" method="POST">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="Enter your name" required>
+
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="Enter your email" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Create a password" required>
+
+        <label>Education Level</label>
+        <select name="education" required>
+            <option value="">Select your level</option>
+            <option>School</option>
+            <option>Undergraduate</option>
+            <option>Postgraduate</option>
+            <option>Masters</option>
+        </select>
+
+        <label>Course / Class</label>
+        <input type="text" name="course" placeholder="Example: Data Science" required>
+
+        <button type="submit">Create Account</button>
+    </form>
+
+    <p style="margin-top:20px; margin-bottom:0;">
+        Already have an account?
+        <a href="{{ url_for('login') }}" style="color:#5145b8;">Login</a>
+    </p>
+
+    <p style="margin-top:15px; margin-bottom:0;">
+        <a href="{{ url_for('home') }}" style="color:#5145b8; text-decoration:none;">
+            ← Back to Welcome Page
+        </a>
+    </p>
+</div>
+</body>
+</html>

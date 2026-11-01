@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to StudyTrack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="welcome-page">
+    <main class="welcome-box">
+        <div class="welcome-brand">
+            <span class="brand-mark" aria-hidden="true">S</span>
+            <span>STUDYTRACK</span>
+        </div>
+        <h1>Make progress<br>one day at a time.</h1>
+
+        {% if message %}
+        <p class="welcome-message success-message">{{ message }}</p>
+        {% elif user_name %}
+        <p class="welcome-message success-message">Welcome back, {{ user_name }}!</p>
+        {% else %}
+        <p class="welcome-message">
+            A calmer way to organize your study goals, plans, and results.
+        </p>
+        {% endif %}
+
+        <a href="{{ url_for('register') }}" class="welcome-action register">
+            Create New Account
+        </a>
+
+        {% if user_name %}
+        <a href="{{ url_for('logout') }}" class="welcome-action logout">
+            Logout
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="welcome-action login">
+            Login to Your Account
+        </a>
+        {% endif %}
+    </main>
+</body>
+</html>
