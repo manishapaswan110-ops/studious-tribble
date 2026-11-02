@@ -180,7 +180,10 @@
     <div class="container">
         <div class="topbar">
             <h1>Performance Report</h1>
-            <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <a href="{{ url_for('start_test_page') }}" class="link-btn">Start Test</a>
+                <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
+            </div>
         </div>
 
         <form method="POST" action="{{ url_for('results') }}">
@@ -232,7 +235,7 @@
                 <div class="score-chart" role="img" aria-label="Bar chart showing score percentages for recent tests">
                     {% for test in chart_tests %}
                         <div class="chart-column" title="{{ test['subject'] }} · {{ test['test_type'] }}: {{ test['percentage'] }}%">
-                            <div class="chart-bar" style="height: {{ test['percentage'] }}%;" aria-hidden="true">{{ test['percentage'] }}%</div>
+                            <div class="chart-bar" data-percentage="{{ test['percentage'] }}" aria-hidden="true">{{ test['percentage'] }}%</div>
                             <div class="chart-label">{{ test['subject'] }}</div>
                         </div>
                     {% endfor %}
@@ -266,5 +269,13 @@
             <p>No test results added yet.</p>
         {% endif %}
     </div>
+    <script>
+        document.querySelectorAll(".chart-bar[data-percentage]").forEach(function (bar) {
+            const percentage = Number.parseFloat(bar.dataset.percentage);
+            if (Number.isFinite(percentage)) {
+                bar.style.height = `${Math.min(100, Math.max(0, percentage))}%`;
+            }
+        });
+    </script>
 </body>
 </html>

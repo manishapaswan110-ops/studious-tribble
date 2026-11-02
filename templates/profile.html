@@ -49,12 +49,17 @@
             gap: 14px;
         }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 15px;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
         }
 
         button {
@@ -80,6 +85,14 @@
             margin: 10px 0;
             color: #444;
         }
+
+        .error-message {
+            padding: 12px;
+            border: 1px solid #e6baba;
+            border-radius: 8px;
+            background: #fff3f3;
+            color: #8d2020;
+        }
     </style>
 </head>
 <body>
@@ -89,7 +102,11 @@
             <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
         </div>
 
-        <form method="POST" action="{{ url_for('profile') }}">
+        {% if error %}
+            <p class="error-message" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
             <label for="name"><strong>Full Name</strong></label>
             <input type="text" id="name" name="name" value="{{ user['name'] }}" required>
 
@@ -106,6 +123,19 @@
 
             <label for="course"><strong>Course / Class</strong></label>
             <input type="text" id="course" name="course" value="{{ user['course'] }}" required>
+
+            <label for="subjects"><strong>Study Subjects</strong></label>
+            <textarea id="subjects" name="subjects" placeholder="Type or paste your subjects, one per line or separated by commas.">{{ subjects_text }}</textarea>
+
+            <label for="subjects_file"><strong>Upload Subject List</strong></label>
+            <input type="file" id="subjects_file" name="subjects_file" accept=".txt,.csv,.doc,.docx,.md">
+
+            <label for="syllabus_text"><strong>Your syllabus</strong></label>
+            <textarea id="syllabus_text" name="syllabus_text" maxlength="12000" placeholder="Paste your syllabus topics, chapters, or learning objectives here. AI-generated notes will be based on this content.">{{ syllabus_text }}</textarea>
+
+            <label for="syllabus_file"><strong>Or upload a syllabus file (.txt or .md)</strong></label>
+            <input type="file" id="syllabus_file" name="syllabus_file" accept=".txt,.md">
+            <small>Keep the syllabus under 12,000 characters. Uploaded syllabus files replace the pasted syllabus.</small>
 
             <button type="submit">Save Changes</button>
         </form>

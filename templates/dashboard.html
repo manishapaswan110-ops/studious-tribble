@@ -23,11 +23,25 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         h1 {
             color: #5145b8;
             margin: 0;
+        }
+
+        .subtitle {
+            color: #666;
+            margin: 0;
+            font-size: 15px;
         }
 
         .logout-btn {
@@ -70,6 +84,41 @@
             border-radius: 16px;
             padding: 25px;
             box-shadow: 0 5px 25px rgba(0, 0, 0, 0.07);
+        }
+
+        .welcome-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, #5145b8, #6d5de1);
+            color: white;
+            border-radius: 18px;
+            padding: 24px 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(81, 69, 184, 0.18);
+        }
+
+        .welcome-banner p {
+            margin: 0;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .welcome-banner h2 {
+            margin: 8px 0 0;
+            font-size: clamp(1.6rem, 3vw, 2.3rem);
+        }
+
+        .welcome-badge {
+            background: rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
         .profile p {
@@ -140,6 +189,23 @@
             color: #444;
         }
 
+        .subject-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .subject-tag {
+            display: inline-block;
+            background: #f0ebff;
+            color: #5145b8;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 8px 12px;
+            border: 1px solid #d9d0ff;
+        }
+
         .goal-list {
             list-style: none;
             margin: 18px 0 0;
@@ -179,27 +245,64 @@
             text-decoration: none;
             font-weight: bold;
         }
+
+        .secondary-link {
+            display: inline-block;
+            border: 1px solid #5145b8;
+            color: #5145b8;
+            padding: 9px 14px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .action-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .focus-subject {
+            display: inline-block;
+            color: #5145b8;
+            background: #f0ebff;
+            border-radius: 999px;
+            padding: 6px 11px;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="topbar">
-            <h1>StudyTrack Dashboard</h1>
+            <div class="title-wrap">
+                <h1>{{ user['name'] if user else 'Student' }} Dashboard</h1>
+                <p class="subtitle">Personalised study overview for your learning journey</p>
+            </div>
             <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="welcome-banner">
+            <div>
+                <p>Welcome back</p>
+                <h2>{{ user['name'] if user else 'Student' }} 👋</h2>
+            </div>
+            <div class="welcome-badge">{{ user['course'] if user else 'Your course' }}</div>
         </div>
 
         <div class="grid">
             <div class="card">
                 <div class="label">Welcome</div>
-                <div class="value">{{ user['name'] }}</div>
+                <div class="value">{{ user['name'] if user else 'Student' }}</div>
             </div>
             <div class="card">
                 <div class="label">Education</div>
-                <div class="value">{{ user['education'] }}</div>
+                <div class="value">{{ user['education'] if user else 'N/A' }}</div>
             </div>
             <div class="card">
                 <div class="label">Course</div>
-                <div class="value">{{ user['course'] }}</div>
+                <div class="value">{{ user['course'] if user else 'N/A' }}</div>
             </div>
         </div>
 
@@ -236,6 +339,47 @@
                     <div class="mini-value small">{{ progress['next_goal'] }}</div>
                 </div>
             </div>
+        </div>
+
+        {% if subjects %}
+        <div class="profile">
+            <h2>My Subjects</h2>
+            <p>Your saved subjects personalize syllabus notes and practice tests.</p>
+            <div class="subject-tags">
+                {% for subject in subjects %}
+                    <span class="subject-tag">{{ subject }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="profile">
+            <h2>Your syllabus-based study plan</h2>
+            <p><strong>Course:</strong> {{ user['course'] if user and user['course'] else 'Add your course in Profile' }}</p>
+            <p><strong>Education level:</strong> {{ user['education'] if user and user['education'] else 'Add your education level in Profile' }}</p>
+            {% if has_syllabus %}
+                <p>Your syllabus is saved. Generate notes for a subject and use them for a practice test.</p>
+                {% if focus_subject %}
+                    <p>
+                        Suggested focus:
+                        <span class="focus-subject">{{ focus_subject }}</span>
+                        {% if focus_percentage is not none %}
+                            <span>({{ focus_percentage }}% average across your recorded tests)</span>
+                        {% else %}
+                            <span>(from your saved subjects)</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+                <div class="action-links">
+                    <a href="{{ url_for('notes', _anchor='syllabus-tools') }}" class="primary-link">Get syllabus notes</a>
+                    <a href="{{ url_for('start_test_page', subject=focus_subject) if focus_subject else url_for('start_test_page') }}" class="secondary-link">Practice this subject</a>
+                </div>
+            {% else %}
+                <p>Add your syllabus in Profile to get notes matched to your course topics.</p>
+                <div class="action-links">
+                    <a href="{{ url_for('profile') }}" class="primary-link">Add my syllabus</a>
+                </div>
+            {% endif %}
         </div>
 
         <div class="profile">
@@ -284,6 +428,14 @@
         </div>
 
         <div class="profile">
+            <h2>Practice Test</h2>
+            <p>Start an AI-generated test and choose multiple choice, fill in the blanks, or short questions.</p>
+            <p style="margin-top: 18px;">
+                <a href="{{ url_for('start_test_page') }}" class="primary-link">Start Test</a>
+            </p>
+        </div>
+
+        <div class="profile">
             <h2>Performance Report</h2>
             <p>Track your subject scores and identify progress areas.</p>
             <p style="margin-top: 18px;">
@@ -293,10 +445,10 @@
 
         <div class="profile">
             <h2>Profile Summary</h2>
-            <p><strong>Email:</strong> {{ user['email'] }}</p>
-            <p><strong>Name:</strong> {{ user['name'] }}</p>
-            <p><strong>Current Level:</strong> {{ user['education'] }}</p>
-            <p><strong>Study Focus:</strong> {{ user['course'] }}</p>
+            <p><strong>Email:</strong> {{ user['email'] if user else 'N/A' }}</p>
+            <p><strong>Name:</strong> {{ user['name'] if user else 'Student' }}</p>
+            <p><strong>Current Level:</strong> {{ user['education'] if user else 'N/A' }}</p>
+            <p><strong>Study Focus:</strong> {{ user['course'] if user else 'N/A' }}</p>
         </div>
     </div>
 

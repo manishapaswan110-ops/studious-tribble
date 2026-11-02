@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ai-csrf-token" content="{{ ai_csrf_token }}">
     <title>StudyTrack Notes</title>
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; }
@@ -106,13 +107,60 @@
 
         .delete-btn {
             background: #ffe5e5;
-            color: #a12c2c;
+            color: #e92326;
             padding: 8px 12px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
         }
+
+        .ai-panel {
+            background: #f7f5ff;
+            border: 1px solid #e1dffd;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .ai-setup-warning {
+            padding: 12px;
+            border: 1px solid #e6baba;
+            border-radius: 8px;
+            background: #fff3f3;
+            color: #742626;
+        }
+
+        .ai-panel h2 { margin: 0 0 8px; color: #5145b8; }
+        .ai-panel p { margin: 0 0 12px; color: #555; }
+        .syllabus-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 14px 0; }
+        .syllabus-tools label { display: grid; gap: 6px; flex: 1 1 220px; font-weight: bold; }
+        .syllabus-tools select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .ai-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .ai-tools button, .ai-panel button {
+            padding: 9px 12px;
+        }
+        .ai-explain-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .ai-explain-controls input { flex: 1 1 220px; }
+        .ai-output {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .ai-result {
+            background: white;
+            border: 1px solid #e8e0ff;
+            border-radius: 10px;
+            padding: 14px;
+            white-space: pre-wrap;
+        }
+        .ai-result h3 { margin: 0 0 8px; color: #5145b8; }
+        .ai-result p { margin: 6px 0; }
+        button:disabled { opacity: 0.65; cursor: wait; }
     </style>
 </head>
 <body>
@@ -121,6 +169,38 @@
             <h1>Study Notes</h1>
             <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
         </div>
+
+        <section class="ai-panel" id="syllabus-tools" aria-labelledby="ai-heading">
+            <h2 id="ai-heading">AI study assistant</h2>
+            <p>Summarize your notes, get concept explanations, create practice quizzes and save flashcards.</p>
+            {% if not ai_configured %}
+                <p class="ai-setup-warning" role="alert">
+                    AI is not connected yet. Add your OpenAI API key to the local <code>.env</code> file and restart the app. Do not share the key in this page or in chat.
+                </p>
+            {% endif %}
+            {% if has_syllabus %}
+                <div class="syllabus-tools">
+                    <label for="syllabus-subject">
+                        Generate notes from my syllabus
+                        {% if subjects %}
+                            <select id="syllabus-subject">
+                                {% for subject in subjects %}
+                                    <option value="{{ subject['subject_name'] }}">{{ subject['subject_name'] }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input id="syllabus-subject" type="text" maxlength="120" placeholder="Subject name">
+                        {% endif %}
+                    </label>
+                    <button type="button" id="syllabus-notes-button" {% if not ai_configured %}disabled{% endif %}>Generate syllabus notes</button>
+                </div>
+            {% else %}
+                <p>Add your syllabus in <a href="{{ url_for('profile') }}">Profile</a> to generate course-aligned notes.</p>
+            {% endif %}
+            <button type="button" id="recommendations-button" {% if not ai_configured %}disabled{% endif %}>Get study recommendations</button>
+            <button type="button" id="saved-flashcards-button">View saved flashcards</button>
+            <div id="ai-output" class="ai-output" aria-live="polite"></div>
+        </section>
 
         <form method="POST" action="{{ url_for('notes') }}">
             <label for="note_title"><strong>Note title</strong></label>
@@ -140,6 +220,15 @@
                         <div class="note-title">{{ note['title'] }}</div>
                         <div class="note-meta">{{ note['created_at'] }}</div>
                         <div class="note-content">{{ note['content'] }}</div>
+                        <div class="ai-tools">
+                            <button type="button" data-ai-action="summarize" data-note-id="{{ note['id'] }}" {% if not ai_configured %}disabled{% endif %}>Summarize</button>
+                            <button type="button" data-ai-action="quiz" data-note-id="{{ note['id'] }}" {% if not ai_configured %}disabled{% endif %}>Generate quiz</button>
+                            <button type="button" data-ai-action="flashcards" data-note-id="{{ note['id'] }}" {% if not ai_configured %}disabled{% endif %}>Generate flashcards</button>
+                        </div>
+                        <div class="ai-explain-controls">
+                            <input type="text" aria-label="Concept to explain" placeholder="Concept to explain" data-concept-for="{{ note['id'] }}">
+                            <button type="button" data-ai-action="explain" data-note-id="{{ note['id'] }}" {% if not ai_configured %}disabled{% endif %}>Explain concept</button>
+                        </div>
                         <form method="POST" action="{{ url_for('delete_note', note_id=note['id']) }}">
                             <button type="submit" class="delete-btn">Delete</button>
                         </form>
@@ -150,5 +239,143 @@
             <p>No notes saved yet.</p>
         {% endif %}
     </div>
+    <script>
+        const aiOutput = document.getElementById("ai-output");
+
+        function addTextElement(parent, tag, text) {
+            const element = document.createElement(tag);
+            element.textContent = text;
+            parent.appendChild(element);
+            return element;
+        }
+
+        function renderCards(title, items, renderItem) {
+            const section = document.createElement("section");
+            section.className = "ai-result";
+            addTextElement(section, "h3", title);
+            items.forEach((item, index) => renderItem(section, item, index));
+            aiOutput.appendChild(section);
+        }
+
+        async function callAi(url, method, data) {
+            aiOutput.replaceChildren();
+            const status = addTextElement(aiOutput, "p", "Working...");
+            try {
+                const options = { method, headers: {} };
+                if (data) {
+                    options.headers["Content-Type"] = "application/json";
+                    options.headers["X-CSRF-Token"] = document.querySelector('meta[name="ai-csrf-token"]').content;
+                    options.body = JSON.stringify(data);
+                }
+                const response = await fetch(url, options);
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.error || "The AI request failed.");
+                }
+                status.remove();
+                return payload;
+            } catch (error) {
+                status.textContent = error.message || "Could not reach the AI service.";
+                return null;
+            }
+        }
+
+        document.querySelectorAll("[data-ai-action]").forEach(button => {
+            button.addEventListener("click", async () => {
+                const action = button.dataset.aiAction;
+                const noteId = Number(button.dataset.noteId);
+                const data = { note_id: noteId };
+                if (action === "explain") {
+                    const input = document.querySelector(`[data-concept-for="${noteId}"]`);
+                    data.concept = input.value.trim();
+                    if (!data.concept) {
+                        aiOutput.replaceChildren();
+                        addTextElement(aiOutput, "p", "Enter a concept to explain.");
+                        return;
+                    }
+                }
+                button.disabled = true;
+                const payload = await callAi(`/ai/${action}`, "POST", data);
+                button.disabled = false;
+                if (!payload) return;
+
+                if (payload.summary) {
+                    renderCards("Summary", [payload.summary], (section, summary) => addTextElement(section, "p", summary));
+                } else if (payload.explanation) {
+                    renderCards("Explanation", [payload.explanation], (section, explanation) => addTextElement(section, "p", explanation));
+                } else if (payload.questions) {
+                    renderCards("Practice quiz", payload.questions, (section, question, index) => {
+                        addTextElement(section, "p", `${index + 1}. ${question.question}`);
+                        Object.entries(question.options).forEach(([key, option]) => addTextElement(section, "p", `${key}. ${option}`));
+                        const answer = document.createElement("details");
+                        addTextElement(answer, "summary", "Show answer");
+                        addTextElement(answer, "p", `Answer: ${question.correct_option}. ${question.explanation}`);
+                        section.appendChild(answer);
+                    });
+                } else if (payload.flashcards) {
+                    renderCards("Saved flashcards", payload.flashcards, (section, card) => {
+                        addTextElement(section, "p", `Q: ${card.question}`);
+                        addTextElement(section, "p", `A: ${card.answer}`);
+                    });
+                }
+            });
+        });
+
+        document.getElementById("recommendations-button").addEventListener("click", async event => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            const payload = await callAi("/ai/recommendations", "POST", {});
+            button.disabled = false;
+            if (!payload) return;
+            renderCards("Study recommendations", payload.recommendations, (section, recommendation) => {
+                addTextElement(section, "h3", recommendation.title);
+                addTextElement(section, "p", recommendation.reason);
+                addTextElement(section, "p", `Try this: ${recommendation.action}`);
+            });
+        });
+
+        document.getElementById("saved-flashcards-button").addEventListener("click", async event => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            const payload = await callAi("/ai/flashcards", "GET");
+            button.disabled = false;
+            if (!payload) return;
+            if (!payload.flashcards.length) {
+                addTextElement(aiOutput, "p", "No AI flashcards saved yet.");
+                return;
+            }
+            renderCards("Saved flashcards", payload.flashcards, (section, card) => {
+                addTextElement(section, "p", `Q: ${card.question}`);
+                addTextElement(section, "p", `A: ${card.answer}`);
+            });
+        });
+
+        const syllabusButton = document.getElementById("syllabus-notes-button");
+        if (syllabusButton) {
+            syllabusButton.addEventListener("click", async () => {
+                const subject = document.getElementById("syllabus-subject").value.trim();
+                if (!subject) {
+                    aiOutput.replaceChildren();
+                    addTextElement(aiOutput, "p", "Enter or select a subject first.");
+                    return;
+                }
+                syllabusButton.disabled = true;
+                const payload = await callAi("/ai/syllabus-notes", "POST", { subject });
+                syllabusButton.disabled = false;
+                if (!payload) return;
+
+                const section = document.createElement("section");
+                section.className = "ai-result";
+                addTextElement(section, "h3", payload.note.title);
+                addTextElement(section, "p", payload.message);
+                const content = addTextElement(section, "div", payload.note.content);
+                content.className = "note-content";
+                aiOutput.appendChild(section);
+
+                const emptyState = document.querySelector(".notes-list");
+                if (!emptyState) window.location.reload();
+            });
+        }
+    </script>
 </body>
 </html>

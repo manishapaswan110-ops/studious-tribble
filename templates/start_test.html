@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ai-csrf-token" content="{{ ai_csrf_token }}">
+    <title>Start a Study Test</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { margin: 0; background: #f4f3fb; padding: 30px 20px; color: #1f1f2e; }
+        .container {
+            max-width: 860px; margin: 0 auto; background: white; border-radius: 18px;
+            padding: 30px; box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+        }
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 24px; }
+        h1, h2 { color: #5145b8; }
+        h1 { margin: 0; }
+        .link-btn { background: #5145b8; color: white; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; }
+        .instructions { color: #555; line-height: 1.5; }
+        .setup-warning {
+            padding: 14px;
+            border: 1px solid #e6baba;
+            border-radius: 10px;
+            background: #fff3f3;
+            color: #742626;
+            line-height: 1.5;
+        }
+        form { display: grid; gap: 16px; }
+        label { font-weight: bold; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border: 1px solid #d8d5e2; border-radius: 8px; font-size: 15px;
+        }
+        textarea { min-height: 150px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+        .question-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+        .type-option {
+            display: flex; align-items: flex-start; gap: 10px; padding: 14px;
+            border: 1px solid #e1dffd; background: #faf9ff; border-radius: 10px; cursor: pointer;
+        }
+        .type-option input { width: auto; margin: 3px 0 0; }
+        .type-option span { display: grid; gap: 5px; }
+        .type-option small { color: #666; font-weight: normal; line-height: 1.35; }
+        button { width: fit-content; background: #5145b8; color: white; padding: 12px 18px; border: 0; border-radius: 9px; cursor: pointer; font-weight: bold; }
+        button:disabled { opacity: 0.65; cursor: wait; }
+        #status { min-height: 1.5em; color: #a12626; }
+        #test-area { margin-top: 24px; }
+        .question-card { background: #faf9ff; border: 1px solid #e8e0ff; border-radius: 12px; padding: 16px; margin: 14px 0; }
+        .question-card h3 { margin-top: 0; }
+        .answer-option { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-weight: normal; }
+        .answer-option input { width: auto; margin: 3px 0 0; }
+        .result-card { border-radius: 8px; padding: 12px; margin: 10px 0; background: #f7f7f7; }
+        .result-card.correct { background: #eefaf2; }
+        .result-card.incorrect { background: #fff3f3; }
+        @media (max-width: 560px) {
+            body { padding: 14px 10px; }
+            .container { padding: 20px 16px; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="topbar">
+            <h1>Start a study test</h1>
+            <a href="{{ url_for('dashboard') }}" class="link-btn">Back to Dashboard</a>
+        </div>
+        <p class="instructions">Choose a subject, select the question format you want, and use one of your saved notes or paste study material. AI will create a test from that material.</p>
+        {% if not ai_configured %}
+            <p class="setup-warning" role="alert">
+                AI question generation is not configured. Set <code>OPENAI_API_KEY</code> in the terminal where you run the app, then restart it. Do not paste your key into this page or share it in chat.
+            </p>
+        {% endif %}
+
+        <form id="setup-form">
+            <div class="form-row">
+                <div>
+                    <label for="subject">Subject</label>
+                    {% if subjects %}
+                        <select id="subject" name="subject" required>
+                            <option value="">Choose a subject</option>
+                            {% for subject in subjects %}
+                                <option value="{{ subject['subject_name'] }}" {% if subject['subject_name'] == selected_subject %}selected{% endif %}>{{ subject['subject_name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <input id="subject" name="subject" maxlength="120" value="{{ selected_subject }}" placeholder="Example: Biology" required>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="question-count">Number of questions</label>
+                    <select id="question-count" name="count">
+                        {% for count in range(1, 11) %}
+                            <option value="{{ count }}" {% if count == 5 %}selected{% endif %}>{{ count }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <fieldset>
+                <legend><strong>Choose question type</strong></legend>
+                <div class="question-types">
+                    <label class="type-option">
+                        <input type="radio" name="question_type" value="mcq" checked>
+                        <span>Multiple choice (MCQ)<small>Select one answer from four choices.</small></span>
+                    </label>
+                    <label class="type-option">
+                        <input type="radio" name="question_type" value="fill_blank">
+                        <span>Fill in the blanks<small>Type the missing word or phrase.</small></span>
+                    </label>
+                    <label class="type-option">
+                        <input type="radio" name="question_type" value="short_answer">
+                        <span>Short questions<small>Answer in your own words; AI checks your response.</small></span>
+                    </label>
+                </div>
+            </fieldset>
+
+            {% if notes %}
+                <div>
+                    <label for="saved-note">Use a saved note (optional)</label>
+                    <select id="saved-note" name="note_id">
+                        <option value="">Enter study material below instead</option>
+                        {% for note in notes %}
+                            <option value="{{ note['id'] }}">{{ note['title'] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+
+            <div>
+                <label for="study-material">Study material</label>
+                <textarea id="study-material" name="text" placeholder="Paste your notes or key concepts here. Leave this blank when using a saved note."></textarea>
+            </div>
+            <button type="submit" id="start-button" {% if not ai_configured %}disabled{% endif %}>Start Test</button>
+        </form>
+
+        <p id="status" role="status" aria-live="polite"></p>
+        <section id="test-area"></section>
+    </main>
+
+    <script>
+        const setupForm = document.getElementById("setup-form");
+        const testArea = document.getElementById("test-area");
+        const status = document.getElementById("status");
+        const startButton = document.getElementById("start-button");
+        const csrfToken = document.querySelector('meta[name="ai-csrf-token"]').content;
+        let currentTestId = null;
+        let currentQuestionType = null;
+
+        function appendText(parent, tag, text) {
+            const element = document.createElement(tag);
+            element.textContent = text;
+            parent.appendChild(element);
+            return element;
+        }
+
+        async function postJson(url, payload) {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": csrfToken
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "The request failed.");
+            return data;
+        }
+
+        function buildQuestionForm(data) {
+            currentTestId = data.test_id;
+            currentQuestionType = data.question_type;
+            setupForm.hidden = true;
+            status.textContent = "";
+            testArea.replaceChildren();
+            appendText(testArea, "h2", `${data.subject} test`);
+
+            const answerForm = document.createElement("form");
+            answerForm.id = "answer-form";
+            data.questions.forEach((question, index) => {
+                const card = document.createElement("section");
+                card.className = "question-card";
+                appendText(card, "h3", `${index + 1}. ${question.question || question.prompt}`);
+
+                if (currentQuestionType === "mcq") {
+                    Object.entries(question.options).forEach(([key, value]) => {
+                        const label = document.createElement("label");
+                        label.className = "answer-option";
+                        const input = document.createElement("input");
+                        input.type = "radio";
+                        input.name = `answer-${index}`;
+                        input.value = key;
+                        label.append(input, document.createTextNode(`${key}. ${value}`));
+                        card.appendChild(label);
+                    });
+                } else if (currentQuestionType === "fill_blank") {
+                    const input = document.createElement("input");
+                    input.name = `answer-${index}`;
+                    input.maxLength = 2000;
+                    input.placeholder = "Type your answer";
+                    input.setAttribute("aria-label", `Answer to question ${index + 1}`);
+                    card.appendChild(input);
+                } else {
+                    const textarea = document.createElement("textarea");
+                    textarea.name = `answer-${index}`;
+                    textarea.maxLength = 2000;
+                    textarea.placeholder = "Write a short answer";
+                    textarea.setAttribute("aria-label", `Answer to question ${index + 1}`);
+                    card.appendChild(textarea);
+                }
+                answerForm.appendChild(card);
+            });
+
+            const submitButton = document.createElement("button");
+            submitButton.type = "submit";
+            submitButton.textContent = "Submit Test";
+            answerForm.appendChild(submitButton);
+            answerForm.addEventListener("submit", submitTest);
+            testArea.appendChild(answerForm);
+        }
+
+        async function submitTest(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const submitButton = form.querySelector('button[type="submit"]');
+            const answers = {};
+            for (let index = 0; index < form.querySelectorAll(".question-card").length; index += 1) {
+                const selector = currentQuestionType === "mcq"
+                    ? `[name="answer-${index}"]:checked`
+                    : `[name="answer-${index}"]`;
+                const selected = form.querySelector(selector);
+                answers[index] = selected ? selected.value.trim() : "";
+            }
+
+            submitButton.disabled = true;
+            status.textContent = "Checking your answers...";
+            try {
+                const result = await postJson("/ai/submit-test", {
+                    test_id: currentTestId,
+                    answers
+                });
+                renderResults(result);
+            } catch (error) {
+                status.textContent = error.message;
+                submitButton.disabled = false;
+            }
+        }
+
+        function renderResults(result) {
+            status.textContent = "";
+            testArea.replaceChildren();
+            appendText(testArea, "h2", `Your score: ${result.score}/${result.total} (${result.percentage}%)`);
+            result.results.forEach((item, index) => {
+                const card = document.createElement("section");
+                card.className = `result-card ${item.correct ? "correct" : "incorrect"}`;
+                appendText(card, "h3", `${index + 1}. ${item.question}`);
+                appendText(card, "p", `Your answer: ${item.answer || "No answer"}`);
+                if (!item.correct) appendText(card, "p", `Expected answer: ${item.expected_answer}`);
+                appendText(card, "p", item.feedback);
+                testArea.appendChild(card);
+            });
+            appendText(testArea, "p", "Your score has been saved to your performance report.");
+            const restart = document.createElement("button");
+            restart.type = "button";
+            restart.textContent = "Start Another Test";
+            restart.addEventListener("click", () => window.location.reload());
+            testArea.appendChild(restart);
+        }
+
+        setupForm.addEventListener("submit", async event => {
+            event.preventDefault();
+            status.textContent = "";
+            const payload = {
+                subject: document.getElementById("subject").value.trim(),
+                count: Number(document.getElementById("question-count").value),
+                question_type: setupForm.elements.question_type.value
+            };
+            const savedNote = document.getElementById("saved-note");
+            if (savedNote && savedNote.value) {
+                payload.note_id = Number(savedNote.value);
+            } else {
+                payload.text = document.getElementById("study-material").value.trim();
+                payload.title = payload.subject;
+            }
+
+            startButton.disabled = true;
+            startButton.textContent = "Preparing your test...";
+            try {
+                const data = await postJson("/ai/start-test", payload);
+                buildQuestionForm(data);
+            } catch (error) {
+                status.textContent = error.message;
+            } finally {
+                startButton.disabled = false;
+                startButton.textContent = "Start Test";
+            }
+        });
+    </script>
+</body>
+</html>
